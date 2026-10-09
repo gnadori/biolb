@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A neuronkutatás mérföldkövei</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Newsreader', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s ease;
+    }
+    .era-bioelectr {
+      --bg-era: #12100d;
+      --panel-era: rgba(33, 27, 21, 0.85);
+      --accent-era: #d4a373;
+      --glow-era: rgba(212, 163, 115, 0.15);
+      --border-era: rgba(212, 163, 115, 0.25);
+    }
+    .era-doctrine {
+      --bg-era: #0d131a;
+      --panel-era: rgba(18, 28, 41, 0.85);
+      --accent-era: #72a4d4;
+      --glow-era: rgba(114, 164, 212, 0.15);
+      --border-era: rgba(114, 164, 212, 0.25);
+    }
+    .era-electrophys {
+      --bg-era: #0a1714;
+      --panel-era: rgba(14, 36, 31, 0.85);
+      --accent-era: #52b788;
+      --glow-era: rgba(82, 183, 136, 0.15);
+      --border-era: rgba(82, 183, 136, 0.25);
+    }
+    .era-molecular {
+      --bg-era: #140d1a;
+      --panel-era: rgba(31, 18, 43, 0.85);
+      --accent-era: #b388eb;
+      --glow-era: rgba(179, 136, 235, 0.15);
+      --border-era: rgba(179, 136, 235, 0.25);
+    }
+    .era-optogenetics {
+      --bg-era: #07131e;
+      --panel-era: rgba(10, 29, 48, 0.85);
+      --accent-era: #00e5ff;
+      --glow-era: rgba(0, 229, 255, 0.2);
+      --border-era: rgba(0, 229, 255, 0.3);
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      height: 8px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: var(--accent-era);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body id="appBody" class="era-bioelectr text-stone-200 min-h-screen bg-[var(--bg-era)] flex flex-col justify-between selection:bg-amber-500/30 selection:text-amber-200">
+
+  <!-- Finom háttérfény -->
+  <div class="fixed inset-0 pointer-events-none transition-all duration-1000 -z-10"
+       style="background: radial-gradient(circle at 50% 20%, var(--glow-era) 0%, transparent 70%);"></div>
+
+  <!-- Fejléc -->
+  <header class="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-[var(--panel-era)] transition-colors duration-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <span class="text-xs uppercase tracking-widest font-mono text-[var(--accent-era)] font-semibold">Tudománytörténeti áttekintés</span>
+        <h1 class="text-2xl sm:text-3xl font-serif text-stone-100 font-semibold tracking-tight">A neuronkutatás mérföldkövei</h1>
+      </div>
+      
+      <!-- Korszakok navigációja -->
+      <div id="eraTabs" class="flex flex-wrap gap-1.5 p-1 bg-black/40 rounded-xl border border-white/10 text-xs font-medium"></div>
+    </div>
+  </header>
+
+  <!-- Fő tartalom -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-10">
+    
+    <!-- Korszak leíró doboz -->
+    <div class="relative overflow-hidden rounded-2xl border p-6 sm:p-8 backdrop-blur-md transition-all duration-700 bg-[var(--panel-era)] border-[var(--border-era)] shadow-2xl">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span id="eraBadge" class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-white/10 text-[var(--accent-era)]"></span>
+            <span id="eraDateRange" class="text-xs font-mono text-stone-400"></span>
+          </div>
+          <h2 id="eraTitle" class="text-2xl sm:text-3xl font-serif font-medium text-stone-100"></h2>
+          <p id="eraDesc" class="mt-2 text-stone-300 max-w-3xl leading-relaxed text-sm sm:text-base"></p>
+        </div>
+        <div class="flex items-center gap-2 self-end md:self-center shrink-0">
+          <button id="btnPrev" class="px-4 py-2 rounded-lg border border-white/10 hover:border-white/30 hover:bg-white/5 text-xs font-mono transition-all">← Előző</button>
+          <button id="btnNext" class="px-4 py-2 rounded-lg border border-white/10 hover:border-white/30 hover:bg-white/5 text-xs font-mono transition-all">Következő →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Horizontális idővonal kártyák -->
+    <div>
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h3 class="text-xs uppercase font-mono tracking-wider text-stone-400">Időrendi állomások és a kutatók portréi</h3>
+        <span class="text-xs font-mono text-stone-500 hidden sm:inline">Kattintson egy állomásra a részletes bemutatáshoz</span>
+      </div>
+      
+      <div id="timelineTrack" class="flex gap-4 overflow-x-auto pb-4 custom-scroll snap-x snap-mandatory">
+        <!-- Javascript generálja a kártyákat -->
+      </div>
+    </div>
+
+    <!-- Kiválasztott mérföldkő részletes bemutatása -->
+    <div id="detailPanel" class="rounded-2xl border p-6 sm:p-8 backdrop-blur-md transition-all duration-700 bg-[var(--panel-era)] border-[var(--border-era)] shadow-xl">
+      <!-- Részletes tartalom dinamikusan -->
+    </div>
+  </main>
+
+  <!-- Lábléc -->
+  <footer class="border-t border-white/10 bg-black/40 backdrop-blur-md py-6 text-stone-500 text-xs font-mono transition-colors duration-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <p>Készült oktatási és tudománytörténeti demonstrációs célra</p>
+      <p>Képek forrása: Wikimedia Commons</p>
+    </div>
+  </footer>
+
+  <script>
+    // Korszakok adatai és színprofiljai
+    const ERAS = {
+      bioelectricity: {
+        id: "bioelectr",
+        name: "Bioelektromosság",
+        period: "18. század vége – 19. század közepe",
+        desc: "Az állati szellemek és folyadékok hipotézisének felváltása: Galvani, du Bois-Reymond és Helmholtz felfedezték, hogy az ingerület tényleges, mérhető elektromos természetű folyamat.",
+        className: "era-bioelectr"
+      },
+      doctrine: {
+        id: "doctrine",
+        name: "A neuronelmélet és a szinapszis",
+        period: "1873 – 1936",
+        desc: "A retikuláris hálózatelmélet megdőlése: a Golgi-féle ezüstimpregnáció és Cajal szövettana önálló sejtes egységként írta le az idegsejtet, Loewi pedig igazolta a kémiai ingerületátvitelt.",
+        className: "era-doctrine"
+      },
+      electrophysiology: {
+        id: "electrophys",
+        name: "Klasszikus elektrofiziológia",
+        period: "1952 – 1962",
+        desc: "Az akciós potenciál ionos alapjainak számszerűsítése óriáskalmár-axonon és feszültségzárral, a transzmitterfelszabadulás kvantális jellege és a látókéreg funkcionális oszlopos felépítése.",
+        className: "era-electrophys"
+      },
+      molecular: {
+        id: "molecular",
+        name: "Molekuláris szint és plaszticitás",
+        period: "1970 – 1981",
+        desc: "Az emléknyomok biokémiai alapjainak felderítése tengeri nyúlon (Aplysia), valamint az egyedi ioncsatornák áramainak közvetlen regisztrálása a gigaseal patch-clamp technikával.",
+        className: "era-molecular"
+      },
+      optogenetics: {
+        id: "optogenetics",
+        name: "Optogenetika és modern eszközök",
+        period: "2005 – napjaink",
+        desc: "Fényérzékeny mikrobiális fehérjék bejuttatása sejttípus-specifikus promóterekkel: az idegsejtek alhálózatainak oki, ezredmásodperces pontosságú serkentése és gátlása éber állatokban.",
+        className: "era-optogenetics"
+      }
+    };
+
+    // A 10 tudománytörténeti mérföldkő
+    // Címek: a magyar helyesírási szabály szerint csak a legelső szó nagybetűs (tulajdonneveken kívül)
+    const MILESTONES = [
+      {
+        id: "galvani-helmholtz",
+        era: "bioelectricity",
+        year: "1791 – 1850",
+        title: "A bioelektromosság és a jelsebesség felfedezése",
+        scientists: "Luigi Galvani & Hermann von Helmholtz",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Luigi_Galvani%2C_oil-painting.jpg/440px-Luigi_Galvani%2C_oil-painting.jpg",
+        secondaryPortraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Hermann_von_Helmholtz.jpg/440px-Hermann_von_Helmholtz.jpg",
+        portraitAlt: "Luigi Galvani portréja",
+        methodology: "Békacomb ideg-izom preparátumok, szikrakisülések, majd Helmholtz galvános mérőórái és kymographjai.",
+        breakthrough: "Galvani bizonyította a belső biológiai áram létezését (animal electricity), von Helmholtz pedig 1850-ben megmérte az ingerület terjedési sebességét békán (~30 m/s), eloszlatva a pillanatnyi misztikus életerő dogmáját.",
+        quote: "„Az ideg nem közvetít azonnal; a vezetés sebessége véges és fizikai eszközökkel mérhető.”"
+      },
+      {
+        id: "golgi-cajal",
+        era: "doctrine",
+        year: "1873 – 1906",
+        title: "A fekete reakció és a neuronelmélet diadala",
+        scientists: "Camillo Golgi & Santiago Ramón y Cajal",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Cajal-Restored.jpg/440px-Cajal-Restored.jpg",
+        secondaryPortraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Camillo_Golgi.jpg/440px-Camillo_Golgi.jpg",
+        portraitAlt: "Santiago Ramón y Cajal portréja",
+        methodology: "Ezüst-nitrátos impregnáció (reazione nera), embriológiai szövettani metszetek fénymikroszkópos rajzai.",
+        breakthrough: "Míg Golgi a folyamatos hálózati összefüggést hirdette, Cajal rámutatott: az idegsejtek diszkrét, önálló citológiai egységek. Felállította a dinamikus polarizáció elvét (a dendritek fogadnak, az axonok vezetnek).",
+        quote: "„Minden idegsejt egy teljesen autonóm sziget az élő mikrovilágban.”"
+      },
+      {
+        id: "sherrington",
+        era: "doctrine",
+        year: "1897 – 1906",
+        title: "A szinapszis és a reflexek integrációja",
+        scientists: "Charles Scott Sherrington",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Sir_Charles_Sherrington_1932.jpg/440px-Sir_Charles_Sherrington_1932.jpg",
+        portraitAlt: "Sir Charles Scott Sherrington portréja",
+        methodology: "Gerincvelői reflexívek időbeli és térbeli mérése, decerebrált állatmodellek mechanikus regisztrátumai.",
+        breakthrough: "Sherrington megalkotta a „szinapszis” kifejezést. Leírta az egyirányú vezetést, a szinaptikus késést, a reciprok gátlást és a térbeli-időbeli szummáció törvényszerűségeit.",
+        quote: "„A szinapszis nem csupán érintkezési pont, hanem szelepet képező funkcionális kapu.”"
+      },
+      {
+        id: "loewi",
+        era: "doctrine",
+        year: "1921 – 1936",
+        title: "A kémiai ingerületátvitel bizonyítása",
+        scientists: "Otto Loewi & Sir Henry Dale",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Otto_Loewi_1936.jpg/440px-Otto_Loewi_1936.jpg",
+        secondaryPortraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Henry_Hallett_Dale_1936.jpg/440px-Henry_Hallett_Dale_1936.jpg",
+        portraitAlt: "Otto Loewi portréja",
+        methodology: "Kettős békaszív-perfúziós kísérlet a bolygóideg ingerlésével és folyadékátvitellel.",
+        breakthrough: "Loewi kimutatta a Vagusstoffot (acetilkolint), igazolva, hogy az idegek diffundáló kémiai hírvivőkkel közvetítik az utasítást a célszervek felé.",
+        quote: "„Az éjjeli álomból hajnalban felébredve azonnal a laboratóriumba siettem megcsinálni a kísérletet.”"
+      },
+      {
+        id: "hodgkin-huxley",
+        era: "electrophysiology",
+        year: "1952",
+        title: "Az akciós potenciál ionos alapjainak leírása",
+        scientists: "Alan Hodgkin & Andrew Huxley",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Alan_Hodgkin_Nobel.jpg/440px-Alan_Hodgkin_Nobel.jpg",
+        secondaryPortraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Andrew_Huxley_Nobel.jpg/440px-Andrew_Huxley_Nobel.jpg",
+        portraitAlt: "Alan Hodgkin portréja",
+        methodology: "Feszültségzár (voltage-clamp) technika az atlanti óriáskalmár 1 mm-es óriástengelyén, kolin-ionhelyettesítéssel.",
+        breakthrough: "Szétválasztották a nátrium-beáramlást és kálium-kiáramlást, megalkotva az akciós potenciált leíró differenciálegyenlet-rendszert és a kapuzó változókat (m, h, n).",
+        quote: "„A membránpotenciál ugrásszerű változása szétválasztható tranziens nátrium- és elhúzódó káliumáramokra.”"
+      },
+      {
+        id: "katz",
+        era: "electrophysiology",
+        year: "1952 – 1954",
+        title: "A kvantális transzmitterfelszabadulás hipotézise",
+        scientists: "Bernard Katz",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Bernard_Katz_1970.jpg/440px-Bernard_Katz_1970.jpg",
+        portraitAlt: "Sir Bernard Katz portréja",
+        methodology: "Intracelluláris mikroelektródos elvezetés békák neuromuszkuláris véglemezén, alacsony Ca2+ koncentráció mellett.",
+        breakthrough: "Katz felfedezte a spontán miniatűr véglemez-potenciálokat (mEPP-ket). Bizonyította, hogy az ingerületátvivő anyagok diszkrét hólyagocskákban (kvantumokban) ürülnek, kalciumfüggő módon.",
+        quote: "„A vezikuláris csomag az ingerületátvitel oszthatatlan alapegysége.”"
+      },
+      {
+        id: "hubel-wiesel",
+        era: "electrophysiology",
+        year: "1959 – 1962",
+        title: "A látókéreg funkcionális architektúrája",
+        scientists: "David Hubel & Torsten Wiesel",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/David_Hubel_1981.jpg/440px-David_Hubel_1981.jpg",
+        secondaryPortraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Torsten_Wiesel_1981.jpg/440px-Torsten_Wiesel_1981.jpg",
+        portraitAlt: "David Hubel portréja",
+        methodology: "Volfrám mikroelektródos elvezetések anesztetizált macskák és majmok elsődleges látókérgében (V1) fénypászták vetítésével.",
+        breakthrough: "Felfedezték az egyszerű és komplex kérgi sejtek orientációszelektivitását, az okuláris dominanciaoszlopokat és a fejlődés korai kritikus periódusát.",
+        quote: "„A látókéreg nem diffúz foltokat lát, hanem kontúrok és élek orientációját elemzi darabokra.”"
+      },
+      {
+        id: "kandel",
+        era: "molecular",
+        year: "1970 – 1980",
+        title: "A szinaptikus plaszticitás molekuláris mechanizmusa",
+        scientists: "Eric Kandel",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Eric_Kandel_2013.jpg/440px-Eric_Kandel_2013.jpg",
+        portraitAlt: "Eric Kandel portréja",
+        methodology: "Aplysia californica (tengeri nyúl) kopoltyú-visszahúzási reflexe, egyedi azonosítható óriásneuronok elektrofiziológiája.",
+        breakthrough: "Kandel közvetlen összefüggést talált a viselkedési tanulás (habituáció, szenzitizáció) és a biokémiai folyamatok között: a cAMP-PKA útvonal, a csatorna-foszforiláció és a CREB-függő szerkezeti átépülés szintjén.",
+        quote: "„A memória nem elvont szubsztancia, hanem a szinapszisok fizikai és biokémiai átépülése.”"
+      },
+      {
+        id: "neher-sakmann",
+        era: "molecular",
+        year: "1976 – 1981",
+        title: "Az egyedi ioncsatornák áramainak regisztrálása",
+        scientists: "Erwin Neher & Bert Sakmann",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Erwin_Neher_Nobel.jpg/440px-Erwin_Neher_Nobel.jpg",
+        secondaryPortraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Bert_Sakmann_Nobel.jpg/440px-Bert_Sakmann_Nobel.jpg",
+        portraitAlt: "Erwin Neher portréja",
+        methodology: "Tűzzel polírozott üveg mikropipetta és szívás segítségével létrehozott gigaohmos zárás (patch-clamp) élő sejtmembránon.",
+        breakthrough: "Közvetlenül regisztrálták egyetlen fehérjemolekula pikoamperes nagyságrendű áramait, véglegesen igazolva az ioncsatornák diszkrét, sztochasztikus nyitási-zárási kinetikáját.",
+        quote: "„Végre hallhatóvá és mérhetővé vált az egyedi fehérjemolekulák kinyílásának zaja.”"
+      },
+      {
+        id: "deisseroth-boyden",
+        era: "optogenetics",
+        year: "2005 – napjaink",
+        title: "Az optogenetika és az oki áramköri vezérlés",
+        scientists: "Karl Deisseroth & Edward Boyden",
+        portraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Karl_Deisseroth_Kyoto_Prize_2018.jpg/440px-Karl_Deisseroth_Kyoto_Prize_2018.jpg",
+        secondaryPortraitUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Ed_Boyden_%2834015694380%29.jpg/440px-Ed_Boyden_%2834015694380%29.jpg",
+        portraitAlt: "Karl Deisseroth portréja",
+        methodology: "Alga-opszinok (Channelrhodopsin-2, Halorhodopsin) beépítése neuronokba vírusvektorokkal, száloptikás lézeres stimuláció.",
+        breakthrough: "Lehetővé tette specifikus neuronpopulációk ezredmásodperces pontosságú, fényvezérelt aktiválását és gátlását szabadon mozgó állatokban, megalapozva a közvetlen oksági áramkör-elemzést.",
+        quote: "„Megtanítottuk az idegsejteket arra, hogy a kék és sárga fotonok nyelvén beszéljenek.”"
+      }
+    ];
+
+    let currentMilestoneIndex = 0;
+
+    // Fallback képkészítő segédfüggvény hálózati hiba esetére
+    function getFallbackAvatar(name) {
+      const initials = name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('');
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+          <rect width="100%" height="100%" fill="#292524"/>
+          <circle cx="100" cy="80" r="45" fill="#44403c"/>
+          <path d="M30 180 C30 135 70 130 100 130 C130 130 170 135 170 180 Z" fill="#44403c"/>
+          <text x="50%" y="88" font-family="sans-serif" font-size="28" font-weight="bold" fill="#d6d3d1" text-anchor="middle">${initials}</text>
+        </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    // Korszakváltó gombok létrehozása
+    function initEraTabs() {
+      const container = document.getElementById('eraTabs');
+      container.innerHTML = Object.entries(ERAS).map(([key, era]) => `
+        <button onclick="selectEra('${key}')" 
+                data-era="${key}"
+                class="era-nav-btn px-3 py-1.5 rounded-lg transition-all duration-300 text-stone-400 hover:text-stone-100 hover:bg-white/5">
+          ${era.name}
+        </button>
+      `).join('');
+    }
+
+    // Idővonal sáv feltöltése a portrékkal
+    function initTimelineTrack() {
+      const track = document.getElementById('timelineTrack');
+      track.innerHTML = MILESTONES.map((item, index) => {
+        return `
+          <div onclick="selectMilestone(${index})"
+               id="card-${index}"
+               class="milestone-card min-w-[240px] max-w-[240px] p-3.5 rounded-xl border border-white/10 bg-black/30 hover:border-white/30 cursor-pointer transition-all duration-300 shrink-0 snap-start flex flex-col justify-between group">
+            <div>
+              <div class="relative w-full h-36 rounded-lg overflow-hidden mb-3 bg-stone-900 border border-white/5">
+                <img src="${item.portraitUrl}" 
+                     alt="${item.portraitAlt}" 
+                     class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                     onerror="this.onerror=null; this.src=getFallbackAvatar('${item.scientists}')">
+                <span class="absolute bottom-2 left-2 text-[10px] font-mono px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-stone-300 border border-white/10">
+                  ${item.year}
+                </span>
+              </div>
+              <h4 class="text-sm font-serif font-medium text-stone-200 line-clamp-2 leading-snug group-hover:text-white transition-colors">
+                ${item.title}
+              </h4>
+            </div>
+            <div class="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-stone-400">
+              <span class="truncate mr-2">${item.scientists.split('&')[0]}</span>
+              <span class="text-[var(--accent-era)] group-hover:translate-x-0.5 transition-transform">→</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Mérföldkő kiválasztása
+    function selectMilestone(index) {
+      currentMilestoneIndex = index;
+      const m = MILESTONES[index];
+      const era = ERAS[m.era];
+
+      // Test osztály és stílus frissítése a korszakháttérhez
+      const body = document.getElementById('appBody');
+      body.className = `${era.className} text-stone-200 min-h-screen bg-[var(--bg-era)] flex flex-col justify-between selection:bg-amber-500/30 selection:text-amber-200`;
+
+      // Korszak összefoglaló adatok
+      document.getElementById('eraBadge').innerText = era.name;
+      document.getElementById('eraDateRange').innerText = era.period;
+      document.getElementById('eraTitle').innerText = m.title;
+      document.getElementById('eraDesc').innerText = era.desc;
+
+      // Fülek aktív állapotának frissítése
+      document.querySelectorAll('.era-nav-btn').forEach(btn => {
+        const isCurrent = btn.getAttribute('data-era') === m.era;
+        btn.classList.toggle('bg-white/15', isCurrent);
+        btn.classList.toggle('text-white', isCurrent);
+        btn.classList.toggle('font-semibold', isCurrent);
+      });
+
+      // Idővonal kártyák kiemelése
+      document.querySelectorAll('.milestone-card').forEach((card, idx) => {
+        const isSelected = idx === index;
+        card.classList.toggle('border-[var(--accent-era)]', isSelected);
+        card.classList.toggle('bg-white/10', isSelected);
+        card.classList.toggle('scale-[1.02]', isSelected);
+        card.classList.toggle('shadow-lg', isSelected);
+      });
+
+      // Részletező panel feltöltése
+      const detail = document.getElementById('detailPanel');
+      detail.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div class="lg:col-span-4 flex flex-col gap-4">
+            <div class="relative rounded-xl overflow-hidden border border-white/15 bg-stone-900 shadow-xl max-h-[380px]">
+              <img src="${m.portraitUrl}" 
+                   alt="${m.portraitAlt}" 
+                   class="w-full h-full object-cover object-top"
+                   onerror="this.onerror=null; this.src=getFallbackAvatar('${m.scientists}')">
+              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4">
+                <p class="text-sm font-semibold text-white">${m.scientists}</p>
+                <p class="text-xs font-mono text-stone-300">${m.year}</p>
+              </div>
+            </div>
+            ${m.secondaryPortraitUrl ? `
+              <div class="flex items-center gap-3 p-3 rounded-lg border border-white/10 bg-black/30">
+                <img src="${m.secondaryPortraitUrl}" 
+                     class="w-12 h-12 rounded-full object-cover border border-white/20"
+                     onerror="this.style.display='none'">
+                <div class="text-xs">
+                  <p class="text-stone-300 font-medium">Kutatótárs</p>
+                  <p class="text-stone-400 font-mono">${m.scientists.includes('&') ? m.scientists.split('&')[1].trim() : ''}</p>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="lg:col-span-8 space-y-6">
+            <div>
+              <span class="text-xs font-mono tracking-wider uppercase text-[var(--accent-era)]">${era.name} · ${m.year}</span>
+              <h3 class="text-2xl sm:text-3xl font-serif font-semibold text-stone-100 mt-1">${m.title}</h3>
+              <p class="text-sm font-mono text-stone-400 mt-1">Kulcsfigurák: ${m.scientists}</p>
+            </div>
+
+            <div class="space-y-4 text-stone-300 leading-relaxed text-sm sm:text-base">
+              <div class="p-4 rounded-xl bg-black/30 border border-white/10">
+                <h5 class="text-xs font-mono uppercase tracking-wider text-stone-400 mb-1">Módszertan és kísérleti berendezés</h5>
+                <p class="text-stone-200">${m.methodology}</p>
+              </div>
+
+              <div class="p-4 rounded-xl bg-black/30 border border-white/10">
+                <h5 class="text-xs font-mono uppercase tracking-wider text-stone-400 mb-1">Tudományos áttörés</h5>
+                <p class="text-stone-200">${m.breakthrough}</p>
+              </div>
+
+              <blockquote class="border-l-2 border-[var(--accent-era)] pl-4 py-1 italic font-serif text-base sm:text-lg text-stone-200 bg-white/5 rounded-r-lg">
+                ${m.quote}
+              </blockquote>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Kártya láthatóvá görgetése a szalagon
+      const activeCard = document.getElementById(`card-${index}`);
+      if (activeCard) {
+        activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+
+    // Korszak szerinti ugrás
+    function selectEra(eraKey) {
+      const targetIndex = MILESTONES.findIndex(m => m.era === eraKey);
+      if (targetIndex !== -1) {
+        selectMilestone(targetIndex);
+      }
+    }
+
+    // Gombok eseménykezelői
+    document.getElementById('btnPrev').addEventListener('click', () => {
+      const newIndex = (currentMilestoneIndex - 1 + MILESTONES.length) % MILESTONES.length;
+      selectMilestone(newIndex);
+    });
+
+    document.getElementById('btnNext').addEventListener('click', () => {
+      const newIndex = (currentMilestoneIndex + 1) % MILESTONES.length;
+      selectMilestone(newIndex);
+    });
+
+    // Billentyűzet-navigáció
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        const newIndex = (currentMilestoneIndex + 1) % MILESTONES.length;
+        selectMilestone(newIndex);
+      } else if (e.key === 'ArrowLeft') {
+        const newIndex = (currentMilestoneIndex - 1 + MILESTONES.length) % MILESTONES.length;
+        selectMilestone(newIndex);
+      }
+    });
+
+    // Indítás
+    initEraTabs();
+    initTimelineTrack();
+    selectMilestone(0);
+  </script>
+</body>
+</html>
